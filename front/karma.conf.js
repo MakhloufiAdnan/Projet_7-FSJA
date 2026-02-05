@@ -2,6 +2,8 @@
 // https://karma-runner.github.io/1.0/config/configuration-file.html
 
 module.exports = function (config) {
+  const isCI = process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true";
+
   config.set({
     basePath: "",
     frameworks: ["jasmine", "@angular-devkit/build-angular"],
@@ -30,13 +32,21 @@ module.exports = function (config) {
       reporters: [{ type: "html" }, { type: "text-summary" }],
     },
     reporters: ["progress", "kjhtml"],
-    browsers: ["ChromeHeadlessNoSandbox", "ChromeHeadless", "Chrome"],
+
+    // Je sécurise l'exécution : en CI j'utilise un headless no-sandbox, sinon headless standard
+    browsers: isCI ? ["ChromeHeadlessNoSandbox"] : ["ChromeHeadless"],
+
     customLaunchers: {
       ChromeHeadlessNoSandbox: {
         base: "ChromeHeadless",
         flags: ["--no-sandbox"],
       },
     },
+
+    // Je veux que le process se termine proprement après l'exécution des tests
+    autoWatch: false,
+    singleRun: true,
+
     restartOnFileChange: true,
   });
 };
