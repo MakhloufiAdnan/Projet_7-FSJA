@@ -1,57 +1,84 @@
-FROM node as front-build
+###########################
+# FRONT - build (Angular) #
+###########################
 
-COPY ./front /src
+FROM node:22.22.0-alpine3.23 AS front-build
+WORKDIR /app/front
 
-WORKDIR /src
+# 1) Copier d'abord les manifests pour profiter du cache Docker
+COPY front/package.json front/package-lock.json ./
 
-RUN npm ci \
-    && npx @angular/cli build --optimization
+# 2) Install reproductible
+RUN npm ci
 
-FROM gradle:jdk17 as back-build
+# 3) Copier le reste et builder
+COPY front/ ./
+RUN npm run build
 
-COPY ./back /src
 
-WORKDIR /src
+###############################################
+# BACK - build (Spring Boot / Gradle Wrapper) #
+###############################################
 
-RUN ./gradlew build
+FROM gradle:8-jdk21 AS back-build
+WORKDIR /home/gradle/src/back
 
-FROM alpine:3.19 as front
+# Copier le projet back
+COPY back/ ./
 
-COPY --from=front-build /src/dist/microcrm/browser /app/front
-COPY misc/docker/Caddyfile /app/Caddyfile
+# S'assurer que le wrapper est exécutable (Windows -> bit exec parfois perdu)
+RUN chmod +x ./gradlew
 
-RUN apk add caddy
+# Build du jar (bootJar)
+RUN ./gradlew --no-daemon clean bootJar
+
+
+###########################
+# FRONT - runtime (Caddy) #
+###########################
+
+FROM caddy:2.11-alpine AS front
+
+# Caddyfile du repo : root * /app/front
+COPY misc/docker/Caddyfile /etc/caddy/Caddyfile
+
+COPY --from=front-build /app/front/dist/microcrm/browser/ /app/front/
+
+
+################################
+# BACK - runtime (Java 21 JRE) #
+################################
+
+FROM eclipse-temurin:21-jre-alpine-3.23 AS back
 
 WORKDIR /app
 
-EXPOSE 80
-EXPOSE 443
+# Copier le jar sans hardcoder le nom
+COPY --from=back-build /home/gradle/src/back/build/libs/*.jar /app/app.jar
 
-CMD ["/usr/sbin/caddy", "run"]
+EXPOSE 8080
 
-FROM alpine:3.19 as back
-
-COPY --from=back-build /src/build/libs/microcrm-0.0.1-SNAPSHOT.jar /app/back/microcrm-0.0.1-SNAPSHOT.jar
-
-RUN apk add openjdk21-jre-headless
-
-WORKDIR /app
-
-EXPOSE 4200
-
-CMD ["java", "-jar", "/app/back/microcrm-0.0.1-SNAPSHOT.jar"]
-
-FROM alpine:3.19 as standalone
-
-COPY --from=front / /
-COPY --from=back / /
-COPY misc/docker/supervisor.ini /app/supervisor.ini
-
-RUN apk add supervisor
-
-WORKDIR /app
-
-CMD ["/usr/bin/supervisord", "-c", "/app/supervisor.ini"]
+# Permet d'injecter des options via JAVA_OPTS (mémoire, etc.)
+ENTRYPOINT ["sh", "-c", "exec java ${JAVA_OPTS:-} -jar /app/app.jar"]
 
 
+##############
+# Standalone #
+##############
 
+FROM alpine:3.23 AS standalone
+
+RUN apk add --no-cache caddy openjdk21-jre-headless supervisor
+
+# Alignement avec Caddyfile (root * /app/front)
+COPY --from=front-build /app/front/dist/microcrm/browser/ /app/front/
+
+# On garde un nom stable de jar
+COPY --from=back-build /home/gradle/src/back/build/libs/*.jar /app/app.jar
+
+COPY misc/docker/Caddyfile /etc/caddy/Caddyfile
+
+COPY misc/docker/supervisor.ini /etc/supervisord.conf
+
+EXPOSE 80 443 8080
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]

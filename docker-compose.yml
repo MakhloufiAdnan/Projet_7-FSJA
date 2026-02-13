@@ -1,0 +1,42 @@
+# Objectif : lancer l'application complète via `docker compose up --build`
+# - front : Caddy sert le build Angular (HTTP 80 + HTTPS 443)
+# - back  : Spring Boot expose l'API sur 8080
+
+services:
+  back:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: back
+    ports:
+      - "8080:8080"
+    environment:
+      # Ajustable (mémoire, options JVM…)
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    healthcheck:
+      # Vérifie que le serveur répond
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/ > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  front:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: front
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      back:
+        condition: service_healthy
+    volumes:
+      # Persistance des données/config Caddy (certificats "tls internal", etc.)
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

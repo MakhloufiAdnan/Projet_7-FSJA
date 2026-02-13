@@ -41,6 +41,10 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+          
+      - name: Make Gradle wrapper executable
+        working-directory: back
+        run: chmod +x ./gradlew
 
       - name: Setup Gradle (cache)
         uses: gradle/actions/setup-gradle@v4
