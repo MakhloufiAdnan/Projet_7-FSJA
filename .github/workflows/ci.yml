@@ -3,10 +3,13 @@
 name: CI
 
 on:
+  # Le filtre `branches` sert à RESTREINDRE. Sans filtre, le workflow se déclenche déjà sur tous les pushes.
+  # Garder ["**"] est inutile et peut prêter à confusion.
   push:
-    branches: ["**"]
   pull_request:
     types: [opened, synchronize, reopened]
+
+  # Nightly (UTC) pour checks périodiques (audit complet, etc.)
   schedule:
     - cron: "0 2 * * *" # nightly (UTC)
   workflow_dispatch:
@@ -41,7 +44,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-          
+
       - name: Make Gradle wrapper executable
         working-directory: back
         run: chmod +x ./gradlew
@@ -86,6 +89,7 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar-cache
 
       - name: SonarQube Cloud scan (back)
+        # Sécurité: n’exécute pas le scan si PR depuis un fork (pas de secrets disponibles).
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: SonarSource/sonarqube-scan-action@v7
         with:
@@ -164,6 +168,7 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar-cache
 
       - name: SonarQube Cloud scan (front)
+        # Sécurité: n’exécute pas le scan si PR depuis un fork (pas de secrets disponibles).
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: SonarSource/sonarqube-scan-action@v7
         with:
@@ -183,10 +188,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    # Que sur PR
+    # Principe du moindre privilège (le job ne fait que lire le repo et lancer Docker).
+    permissions:
+      contents: read
+
+    # Que sur PR (gating avant merge, et évite le coût sur tous les pushes)
     if: github.event_name == 'pull_request'
 
-    # "fail fast" : ne teste compose que si back/front CI OK
+    # Fail fast : ne teste Compose que si build/tests back+front sont OK
     needs: [back, front]
 
     steps:
@@ -197,7 +206,8 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Start stack (docker compose up)
-        run: docker compose up -d --build
+        # Réduit le "flaky" (Compose attend que les services soient prêts/healthy au lieu d'enchaîner trop tôt).
+        run: docker compose up -d --build --wait --wait-timeout 180
 
       - name: Smoke test (back + front)
         shell: bash
@@ -212,7 +222,7 @@ jobs:
             fi
             sleep 4
           done
-          # Re-check "hard fail" si jamais la boucle n'a pas break
+          # Hard fail si l'API ne répond toujours pas
           curl -fsS http://localhost:8080/ >/dev/null
 
           echo "Waiting for FRONT on http://localhost/ ..."
@@ -223,6 +233,7 @@ jobs:
             fi
             sleep 4
           done
+          # Hard fail si le front ne répond toujours pas
           curl -fsS http://localhost/ >/dev/null
 
       - name: Compose status (always)
