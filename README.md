@@ -1,6 +1,6 @@
 # MicroCRM (Orion) — Monorepo Full-Stack (Spring Boot + Angular) avec CI/CD
 
-MicroCRM est une application CRM simplifiée (création/édition/visualisation d’individus et d’organisations) utilisée dans le scénario **Orion** pour mettre en œuvre une chaîne CI/CD : build, tests, contrôle sécurité, analyse qualité, conteneurisation et orchestration.
+MicroCRM est une application CRM simplifiée (création/édition/visualisation d'individus et d'organisations) utilisée dans le scénario **Orion** pour mettre en œuvre une chaîne CI/CD : build, tests, contrôle sécurité, analyse qualité, conteneurisation et orchestration.
 
 ![Page d'accueil](./misc/screenshots/screenshot_1.png)
 ![Édition de la fiche d'un individu](./misc/screenshots/screenshot_2.png)
@@ -59,36 +59,42 @@ Ce dépôt est un **monorepo** :
 ## Démarrage rapide (Docker Compose — recommandé)
 
 - Depuis la racine du dépôt :
+
 ```bash
 docker compose up --build
 ```
 
 - En mode détaché :
+
 ```bash
 docker compose up -d --build
 docker compose ps
 ```
 
 - Arrêt / nettoyage :
+
 ```bash
 docker compose down
 ```
 
 - Endpoints :
-API : http://localhost:8080
-Front : https://localhost (redirigé depuis http://localhost)
+  API : http://localhost:8080
+  Front : https://localhost (redirigé depuis http://localhost)
 
 ## Démarrage en local (sans Docker) :
 
 Ouvrez 2 terminaux : un pour back/, un pour front/.
 
 1. Back-end (API)
+
 - Aller dans le répertoire back :
+
 ```bash
 cd back
 ```
 
 - Construire le JAR :
+
 ```bash
 # Linux / macOS
 ./gradlew build
@@ -98,6 +104,7 @@ gradlew.bat build
 ```
 
 2. Démarrer le service :
+
 ```bash
 java -jar build/libs/microcrm-0.0.1-SNAPSHOT.jar
 ```
@@ -107,39 +114,45 @@ API disponible sur : http://localhost:8080
 3. Front-end (UI)
 
 - Aller dans le répertoire front :
+
 ```bash
 cd front
 ```
 
 - Installer les dépendances (première fois / après update) :
+
 ```bash
 npm install
 ```
 
 4. Démarrer le serveur de dev :
+
 ```bash
 npx ng serve
 ```
 
 UI disponible sur : http://localhost:4200
 
-## Tests & contrôles : 
+## Tests & contrôles :
 
-1) Back-end — tests
+1. Back-end — tests
+
 ```bash
 cd back
 ./gradlew clean test
 
 ```
 
-2) Front-end — tests (headless, compatible CI)
-Dépendances : Google Chrome ou Chromium
+2. Front-end — tests (headless, compatible CI)
+   Dépendances : Google Chrome ou Chromium
+
 ```bash
 cd front
 npx ng test --watch=false --browsers=ChromeHeadlessNoSandbox
 ```
 
-3) Sécurité dépendances (front — runtime only)
+3. Sécurité dépendances (front — runtime only)
+
 ```bash
 cd front
 npm audit --omit=dev --audit-level=high
@@ -163,7 +176,8 @@ npm audit --omit=dev --audit-level=high
 
 ### Artefacts
 
-La CI publie des artefacts consultables dans l’UI GitHub Actions (selon configuration), par ex. :
+La CI publie des artefacts consultables dans l'UI GitHub Actions (selon configuration), par ex. :
+
 - rapports JUnit/HTML (back)
 - rapport JSON npm audit (nightly, si activé)
 
@@ -172,23 +186,28 @@ La CI publie des artefacts consultables dans l’UI GitHub Actions (selon config
 ### Dans Settings → Secrets and variables → Actions :
 
 1. Secret
+
 - SONAR_TOKEN
 
 2. Variables
+
 - SONAR_ORG
 - SONAR_PROJECT_KEY_BACK
 - SONAR_PROJECT_KEY_FRONT
 
 ### Où trouver les valeurs (SonarCloud)
-- SONAR_ORG : clé/organisation SonarCloud (visible dans l’UI SonarCloud et utilisée via sonar.organization)
-- SONAR_PROJECT_KEY_* : clé du projet (Project Settings → General Settings / Project key)
+
+- SONAR_ORG : clé/organisation SonarCloud (visible dans l'UI SonarCloud et utilisée via sonar.organization)
+- SONAR*PROJECT_KEY*\* : clé du projet (Project Settings → General Settings / Project key)
 
 ⚠️ Ne jamais afficher un secret dans les logs (ex : pas de echo $SONAR_TOKEN).
 
 ## Conteneurisation (Docker) & cibles de build
+
 Le Dockerfile (racine) permet de construire plusieurs cibles.
 
 1. Front
+
 ```bash
 docker build --target front -t orion-microcrm-front:latest .
 docker run -it --rm -p 80:80 -p 443:443 orion-microcrm-front:latest
@@ -197,6 +216,7 @@ docker run -it --rm -p 80:80 -p 443:443 orion-microcrm-front:latest
 Front disponible sur : https://localhost (redirige depuis http://localhost)
 
 2. Back
+
 ```bash
 docker build --target back -t orion-microcrm-back:latest .
 docker run -it --rm -p 8080:8080 orion-microcrm-back:latest
@@ -205,12 +225,14 @@ docker run -it --rm -p 8080:8080 orion-microcrm-back:latest
 API disponible sur : http://localhost:8080
 
 ## Standalone (front + back dans la même image)
+
 ```bash
 docker build --target standalone -t orion-microcrm-standalone:latest .
 docker run -it --rm -p 8080:8080 -p 80:80 -p 443:443 orion-microcrm-standalone:latest
 ```
 
 ## Smoke tests (exemples)
+
 ```bash
 curl -I http://localhost:8080/
 curl -I http://localhost/
@@ -220,42 +242,100 @@ curl -k -I https://localhost/
 ### Exemple de réponse :
 
 PS <chemin du projet> curl.exe -I http://localhost:8080/
->> 
-HTTP/1.1 204 
-Vary: Origin
-Vary: Access-Control-Request-Method
-Vary: Access-Control-Request-Headers
-Date: Fri, 13 Feb 2026 05:15:41 GMT
 
-- Interprétation : l’API Spring Boot est accessible et répond correctement sur le port 8080.
-- 204 No Content signifie : “requête OK, mais pas de contenu à renvoyer”. C’est fréquent quand la route / n’est pas une page ou un endpoint qui retourne une ressource.
+> > HTTP/1.1 204
+> > Vary: Origin
+> > Vary: Access-Control-Request-Method
+> > Vary: Access-Control-Request-Headers
+> > Date: Fri, 13 Feb 2026 05:15:41 GMT
+
+- Interprétation : l'API Spring Boot est accessible et répond correctement sur le port 8080.
+- 204 No Content signifie : "requête OK, mais pas de contenu à renvoyer”. C'est fréquent quand la route / n'est pas une page ou un endpoint qui retourne une ressource.
 
 PS <chemin du projet> curl.exe -I http://localhost/
->> 
-HTTP/1.1 308 Permanent Redirect
-Connection: close
-Location: https://localhost/
-Date: Fri, 13 Feb 2026 05:15:50 GMT
+
+> > HTTP/1.1 308 Permanent Redirect
+> > Connection: close
+> > Location: https://localhost/
+> > Date: Fri, 13 Feb 2026 05:15:50 GMT
 
 - Interprétation : le front (Caddy) est joignable en HTTP mais applique une redirection permanente vers HTTPS.
 - Location: https://localhost/ : confirme explicitement la destination de redirection.
-- Connection: close : normal sur une réponse de redirection ; le serveur ferme la connexion après l’envoi de la réponse.
+- Connection: close : normal sur une réponse de redirection ; le serveur ferme la connexion après l'envoi de la réponse.
 
 PS <chemin du projet> curl.exe -k -I https://localhost/
->>
-HTTP/1.1 200 OK
-Accept-Ranges: bytes
-Alt-Svc: h3=":443"; ma=2592000
-Content-Length: 592
-Content-Type: text/html; charset=utf-8
-Etag: "dgdksc0xr8qogg"
-Last-Modified: Fri, 13 Feb 2026 05:13:27 GMT
-Server: Caddy
-Vary: Accept-Encoding
-Date: Fri, 13 Feb 2026 05:16:00 GMT
 
-- Interprétation : le front est servi correctement en HTTPS (c’est le résultat attendu après la redirection 308).
-- Pourquoi -k ? : -k ignore la vérification du certificat TLS. C’est utile ici car Caddy peut générer un certificat “internal” (auto-signé) en local, qui n’est pas reconnu par défaut par curl/Windows.
+> > HTTP/1.1 200 OK
+> > Accept-Ranges: bytes
+> > Alt-Svc: h3=":443"; ma=2592000
+> > Content-Length: 592
+> > Content-Type: text/html; charset=utf-8
+> > Etag: "dgdksc0xr8qogg"
+> > Last-Modified: Fri, 13 Feb 2026 05:13:27 GMT
+> > Server: Caddy
+> > Vary: Accept-Encoding
+> > Date: Fri, 13 Feb 2026 05:16:00 GMT
+
+- Interprétation : le front est servi correctement en HTTPS (c'est le résultat attendu après la redirection 308).
+- Pourquoi -k ? : -k ignore la vérification du certificat TLS. C'est utile ici car Caddy peut générer un certificat "internal” (auto-signé) en local, qui n'est pas reconnu par défaut par curl/Windows.
 - Content-Type: text/html : confirme que le serveur renvoie bien une page HTML.
 - Alt-Svc: h3=":443" : Caddy annonce la disponibilité de HTTP/3 (QUIC) — information normale.
 - Etag / Last-Modified / Accept-Ranges : marqueurs standard de cache/serving statique.
+
+## Politique de versioning
+
+### Format
+
+- Tags au format **SemVer** : `vMAJOR.MINOR.PATCH` (ex : `v1.2.3`).
+
+### Déclenchement des versions (Conventional Commits)
+
+Le workflow de versioning est **automatique**, mais il ne publie une nouvelle version **que si** l'historique contient des commits conformes à **Conventional Commits** :
+
+- `fix: ...` → incrémente **PATCH**
+- `feat: ...` → incrémente **MINOR**
+- `BREAKING CHANGE: ...` (dans le body/footer) ou `feat!: ...` / `fix!: ...` → incrémente **MAJOR**
+
+⚠️ Par défaut, des types comme `chore:`, `docs:`, `test:`, `style:` ne déclenchent pas de nouvelle version (donc pas de mise à jour de `package.json` / `build.gradle` tant qu'il n'y a pas de `fix`/`feat`/breaking change).
+
+Références :
+
+- SemVer : https://semver.org/
+- Conventional Commits : https://www.conventionalcommits.org/en/v1.0.0/
+
+### Flux CI/CD (où / quand / quoi)
+
+1. **CI** — `.github/workflows/ci.yml` (push branches + PR)  
+   Objectif : tests + build + contrôles (front/back), qualité & sécurité.
+
+2. **Versioning** — `.github/workflows/semantic-release.yml` (push sur `main`)  
+   Objectif : calculer la prochaine version, mettre à jour les fichiers de version, commit, puis créer le tag `vX.Y.Z`.
+
+- Configuration : `.releaserc.yml` (racine)
+- Mise à jour versions (monorepo) pendant le "prepar" :
+  - `front/` : `npm version ${nextRelease.version} --no-git-tag-version` → met à jour `front/package.json` + `front/package-lock.json`
+  - `back/` : remplacement de la ligne `version = '…'` dans `back/build.gradle`
+  - Mise à jour du changelog : `CHANGELOG.md`
+  - Commit des fichiers ci-dessus via `@semantic-release/git`
+
+**Pourquoi un PAT (`RELEASE_TOKEN`) ?**  
+Un push (commit/tag) fait depuis un workflow avec `GITHUB_TOKEN` peut ne pas déclencher d'autres workflows `on: push` (anti-boucle). Un PAT stocké en secret est la solution recommandée pour que le tag déclenche les workflows tag-based.
+
+3. **Release GitHub + artefacts** — `.github/workflows/release.yml` (push tag `v*`)  
+   Objectif : créer automatiquement une GitHub Release versionnée + attacher les artefacts (JAR + build Angular).
+
+4. **CD Images Docker (GHCR)** — `.github/workflows/cd-images.yml` (push sur `main` + tags `v*.*.*`)  
+   Objectif : build & push des images Docker sur GHCR, taggées avec la version.
+
+### Release "test”
+
+Pour valider la chaîne :
+
+- faire une PR contenant au moins un commit `fix: ...` (ou `feat: ...`)
+- merger sur `main`
+- vérifier qu'un nouveau tag `v*` est créé, puis que `release.yml` et `cd-images.yml` s'exécutent sur ce tag.
+
+### Sécurité
+
+- Ne jamais afficher un secret dans les logs.
+- Les tokens (PAT, Sonar, etc.) doivent rester uniquement dans GitHub Secrets.
