@@ -1,0 +1,30 @@
+branches:
+  - main
+
+tagFormat: "v${version}"
+
+plugins:
+  - "@semantic-release/commit-analyzer"
+  - "@semantic-release/release-notes-generator"
+
+  # Met à jour les versions (sans publish)
+  - - "@semantic-release/exec"
+    - prepareCmd: |
+        set -e
+        cd front
+        npm version ${nextRelease.version} --no-git-tag-version
+        cd ..
+        sed -i -E "s/^version[[:space:]]*=[[:space:]]*['\"][^'\"]+['\"]/version = '${nextRelease.version}'/" back/build.gradle
+
+  - "@semantic-release/changelog"
+
+  - - "@semantic-release/git"
+    - assets:
+        - CHANGELOG.md
+        - back/build.gradle
+        - front/package.json
+        - front/package-lock.json
+      message: |-
+        chore(release): ${nextRelease.version}
+
+        ${nextRelease.notes}
