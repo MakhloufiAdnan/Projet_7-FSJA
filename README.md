@@ -169,10 +169,15 @@ npm audit --omit=dev --audit-level=high
 - schedule (nightly)
 - workflow_dispatch (manuel)
 
+> Note : le job "Compose smoke test" est volontairement limité aux Pull Requests afin de servir de contrôle bloquant avant merge, tout en gardant la CI rapide sur les simples pushes de branches.
+
+> Le smoke test Compose ne nécessite pas de secrets : il peut s'exécuter sur PR sans exposer d'informations sensibles.
+
 ### Jobs
 
 - Back : Gradle clean test + bootJar + scan SonarCloud
 - Front : npm ci + npm audit --omit=dev + tests Angular + build + scan SonarCloud
+- Compose smoke test (PR) : build + démarrage via Docker Compose, puis vérification rapide (curl API + front), puis cleanup.
 
 ### Artefacts
 
@@ -232,6 +237,16 @@ docker run -it --rm -p 8080:8080 -p 80:80 -p 443:443 orion-microcrm-standalone:l
 ```
 
 ## Smoke tests (exemples)
+
+### Smoke test automatisé en CI (Pull Requests)
+
+En plus des exemples ci-dessous, la CI exécute un smoke test Docker Compose sur les Pull Requests :
+- `docker compose up -d --build` (démarrage de la stack)
+- vérification que l'API répond sur `http://localhost:8080/`
+- vérification que le front répond sur `http://localhost/` (redirige vers HTTPS)
+- `docker compose down -v --remove-orphans` (cleanup systématique)
+
+Objectif : détecter avant merge tout problème de conteneurisation/orchestration (Dockerfile, ports, healthchecks, dépendances).
 
 ```bash
 curl -I http://localhost:8080/
