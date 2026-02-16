@@ -1,6 +1,12 @@
 * {
-	root * /app/front
-	encode gzip
-	try_files {path} /index.html
-	file_server
+  root * /app/front
+  encode gzip
+  try_files {path} /index.html
+  file_server
+
+  # Access logs JSON pour ingestion ELK
+  log {
+    output file /data/logs/caddy-access.json
+    format json
+  }
 }

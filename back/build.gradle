@@ -9,23 +9,28 @@ group = 'com.openclassroom.devops.orion'
 version = '0.1.2'
 
 java {
-	sourceCompatibility = '21'
+  sourceCompatibility = '21'
 }
 
 repositories {
-	mavenCentral()
+  mavenCentral()
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-data-rest'
-	implementation 'ro.polak:spring-boot-data-fixtures:0.2.0'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	runtimeOnly 'org.hsqldb:hsqldb'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+  implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+  implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+  implementation 'org.springframework.boot:spring-boot-starter-data-rest'
+
+  // JSON logging (Logback) pour ingestion ELK/Logstash
+  implementation 'net.logstash.logback:logstash-logback-encoder:8.1'
+
+  implementation 'ro.polak:spring-boot-data-fixtures:0.2.0'
+  testImplementation 'org.springframework.boot:spring-boot-starter-test'
+  runtimeOnly 'org.hsqldb:hsqldb'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 test {
-    useJUnitPlatform()
+  useJUnitPlatform()
 }
+

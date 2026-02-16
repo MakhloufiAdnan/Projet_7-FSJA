@@ -1,0 +1,68 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.11
+    container_name: microcrm-es
+    environment:
+      - discovery.type=single-node
+      # Pour le confort local/dev : désactive sécurité & TLS
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - elk
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.19.11
+    container_name: microcrm-logstash
+    environment:
+      - LS_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - ./elk/logstash/pipeline:/usr/share/logstash/pipeline:ro
+
+      # Volumes de logs partagés (lecture seule)
+      - back_logs:/logs/back:ro
+      - front_logs:/logs/front:ro
+
+      # Persistance état Logstash (sincedb : mémorisation position de lecture dans les fichiers)
+      - logstash_data:/usr/share/logstash/data
+    depends_on:
+      - elasticsearch
+    networks:
+      - elk
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.19.11
+    container_name: microcrm-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - XPACK_SECURITY_ENABLED=false
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - elk
+
+  # --- Overrides des services applicatifs (définis dans docker-compose.yml) ---
+  back:
+    environment:
+      - LOG_PATH=/app/logs
+    volumes:
+      - back_logs:/app/logs
+
+  front:
+    volumes:
+      - front_logs:/data/logs
+
+volumes:
+  es_data:
+  logstash_data:
+  back_logs:
+  front_logs:
+
+networks:
+  elk:
+    driver: bridge
