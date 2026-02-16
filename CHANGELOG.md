@@ -1,3 +1,10 @@
+# [0.2.0](https://github.com/MakhloufiAdnan/Projet_7-FSJA/compare/v0.1.2...v0.2.0) (2026-02-16)
+
+
+### Features
+
+* **monitoring:** add local ELK stack and JSON logs ([03cc112](https://github.com/MakhloufiAdnan/Projet_7-FSJA/commit/03cc1125c17a3008f39bf75b56aa4196ee924e9d))
+
 ## [0.1.2](https://github.com/MakhloufiAdnan/Projet_7-FSJA/compare/v0.1.1...v0.1.2) (2026-02-14)
 
 
