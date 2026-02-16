@@ -1,3 +1,10 @@
+## [0.3.1](https://github.com/MakhloufiAdnan/Projet_7-FSJA/compare/v0.3.0...v0.3.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* **logging:** default LOG_PATH for local/CI ([5e09c44](https://github.com/MakhloufiAdnan/Projet_7-FSJA/commit/5e09c44e2ef1d5d1162a7b375c375464cca34590))
+
 # [0.3.0](https://github.com/MakhloufiAdnan/Projet_7-FSJA/compare/v0.2.0...v0.3.0) (2026-02-16)
 
 
