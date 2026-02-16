@@ -7,7 +7,9 @@
     -->
 
     <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="microcrm"/>
-    <property name="LOG_PATH" value="${LOG_PATH:-/app/logs}"/>
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="microcrm"/>
+    <springProperty scope="context" name="LOG_PATH" source="LOG_PATH" defaultValue="./logs"/>
+
 
     <!-- Console lisible -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
