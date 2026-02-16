@@ -1,4 +1,4 @@
-# MicroCRM (Orion) — Monorepo Full-Stack (Spring Boot + Angular) avec CI/CD
+# MicroCRM (Orion) — Monorepo Full-Stack (Spring Boot  Angular) avec CI/CD
 
 MicroCRM est une application CRM simplifiée (création/édition/visualisation d'individus et d'organisations) utilisée dans le scénario **Orion** pour mettre en œuvre une chaîne CI/CD : build, tests, contrôle sécurité, analyse qualité, conteneurisation et orchestration.
 
@@ -13,7 +13,8 @@ MicroCRM est une application CRM simplifiée (création/édition/visualisation d
 - [Versions retenues](#versions-retenues)
 - [Prérequis](#prérequis)
 - [Démarrage rapide (Docker Compose — recommandé)](#démarrage-rapide-docker-compose--recommandé)
-- [Démarrage en local (sans Docker)](#démarrage-en-local-sans-docker)
+- [Démarrage en local (sans Docker)]
+(#démarrage-en-local-sans-docker)
   - [Back-end (API)](#back-end-api)
   - [Front-end (UI)](#front-end-ui)
 - [Tests & contrôles](#tests--contrôles)
@@ -25,7 +26,11 @@ MicroCRM est une application CRM simplifiée (création/édition/visualisation d
 - [Conteneurisation (Docker) & cibles de build](#conteneurisation-docker--cibles-de-build)
 - [Smoke tests (exemples)](#smoke-tests-exemples)
 - [Notes sécurité](#notes-sécurité)
-
+[Monitoring (ELK) — centralisation des logs (local)](#monitoring-elk--centralisation-des-logs-local)
+  - [Démarrage (app + ELK)](#démarrage-app--elk)
+  - [Accès (Elasticsearch / Kibana)](#accès-elasticsearch--kibana)
+  - [Logs collectés (Back + Front)](#logs-collectés-back--front)
+  - [Kibana — première visualisation (Lens)](#kibana--première-visualisation-lens)
 ---
 
 ## Architecture & organisation du dépôt
@@ -354,3 +359,128 @@ Pour valider la chaîne :
 
 - Ne jamais afficher un secret dans les logs.
 - Les tokens (PAT, Sonar, etc.) doivent rester uniquement dans GitHub Secrets.
+
+## Monitoring (ELK) — centralisation des logs (local)
+
+Objectif : ajouter un monitoring **local** basé sur **ELK** (Elasticsearch, Logstash, Kibana) pour :
+- centraliser les logs du **back** (Spring Boot) et du **front** (Caddy)
+- analyser facilement : **erreurs**, **volumétrie**, **pics d’activité**, **tendances**
+- construire un tableau de bord simple dans Kibana
+
+> ⚠️ ELK est une stack relativement lourde : à garder **hors CI/CD** (pas adapté à un pipeline) et à réserver au poste de dev.
+
+Références (docs officielles / outils utilisés) :
+- Elasticsearch (Docker  prérequis) : https://www.elastic.co/docs/deploy-manage/deploy/self-managed/install-elasticsearch-docker-basic
+- Bootstrap checks (ex : `vm.max_map_count` sur Linux) : https://www.elastic.co/docs/deploy-manage/deploy/self-managed/bootstrap-checks
+- Logstash input `file` (sincedb) : https://www.elastic.co/guide/en/logstash/current/plugins-inputs-file.html
+- Kibana Lens : https://www.elastic.co/docs/explore-analyze/visualize/lens
+- Caddy logging : https://caddyserver.com/docs/caddyfile/directives/log
+- Logback JSON (logstash-logback-encoder) : https://github.com/logfellow/logstash-logback-encoder
+
+### Démarrage (app  ELK)
+
+Le monitoring se lance via un **docker-compose dédié** `docker-compose-elk.yml` superposé au compose principal :
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose-elk.yml up --build
+```
+
+Pourquoi superposer 2 compose ?
+- le compose “app” reste simple (front  back)
+- le compose “ELK” peut être lancé **uniquement quand on en a besoin**
+- séparation claire des responsabilités (application vs monitoring)
+
+> Note : dans un contexte dev, on peut désactiver la sécurité Elastic pour simplifier l’accès (pas recommandé en prod).
+
+### Accès (Elasticsearch / Kibana)
+
+- Elasticsearch : http://localhost:9200
+- Kibana : http://localhost:5601
+
+### Logs collectés (Back  Front)
+
+#### Back — Spring Boot (logs applicatifs)
+
+But : produire des logs **structurés en JSON** (une ligne = un événement) pour pouvoir filtrer et agréger facilement dans Kibana.
+
+Implémentation typique :
+- conserver un log console lisible (dev)
+- écrire un fichier de logs JSON (rotation quotidienne)
+
+Référence : `logstash-logback-encoder` (Logback → JSON) :  
+https://github.com/logfellow/logstash-logback-encoder
+
+#### Front — Caddy (access logs HTTP)
+
+Les “logs front” collectés ici correspondent aux **access logs HTTP** du serveur Caddy qui sert Angular :
+- URL demandée
+- code HTTP (200/404/500…)
+- user-agent
+- durée (selon configuration)
+
+Directive officielle Caddy :  
+https://caddyserver.com/docs/caddyfile/directives/log
+
+### Kibana — première visualisation (Lens)
+
+Objectif minimal attendu : une visualisation simple :
+- **volume de logs** dans le temps
+- **erreurs** dans le temps
+
+#### 1) Vérifier que les logs arrivent (Discover)
+1. Kibana → **Discover**
+2. Créer/choisir une **Data view** (ex : `microcrm-logs-*`)
+3. Vérifier que des documents s’affichent et que le champ temps est `@timestamp`
+
+Doc Data views :  
+https://www.elastic.co/docs/explore-analyze/find-and-organize/data-views
+
+#### 2) Créer un graphe dans Lens (volume)
+1. Depuis Discover, clique sur un champ agrégeable (ex : `@timestamp` ou `level`)
+2. Clique **Visualize** → Kibana ouvre Lens
+3. Dans Lens :
+   - X = `@timestamp` (Date histogram)
+   - Y = `Count`
+
+Doc Lens :  
+https://www.elastic.co/docs/explore-analyze/visualize/lens
+
+#### 3) Graphe “erreurs dans le temps”
+1. Dans Discover, filtre (KQL) :
+   - `level : "ERROR"`
+2. Ouvre Lens (Visualize)
+3. Même graphe (X=`@timestamp`, Y=Count)
+
+### Dépannage ELK (local)
+
+#### Elasticsearch ne démarre pas
+Causes fréquentes :
+- RAM insuffisante allouée à Docker (ELK consomme plusieurs Go en local)
+- sur Linux : `vm.max_map_count` trop bas (bootstrap checks)
+
+Doc :  
+https://www.elastic.co/docs/deploy-manage/deploy/self-managed/bootstrap-checks
+
+#### Logstash “ne relit pas” les fichiers
+Comportement souvent normal : l’input `file` suit la lecture via **sincedb** (il mémorise où il s’est arrêté).
+
+Doc Logstash `file` / sincedb :  
+https://www.elastic.co/guide/en/logstash/current/plugins-inputs-file.html
+
+Pour repartir de zéro en local (⚠️ destructif : supprime les volumes) :
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose-elk.yml down -v --remove-orphans
+```
+ 
+#### Logs & données sensibles (monitoring)
+
+Le monitoring (ELK) centralise potentiellement :
+- des URLs
+- des messages d’erreur
+- des informations applicatives pouvant contenir des identifiants ou des données personnelles selon le contenu des logs
+
+Bonnes pratiques :
+- éviter de logger des secrets (tokens, mots de passe)
+- limiter le niveau de logs en production
+- appliquer une politique de rétention adaptée (rotation / purge)
