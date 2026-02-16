@@ -1,3 +1,10 @@
+# [0.3.0](https://github.com/MakhloufiAdnan/Projet_7-FSJA/compare/v0.2.0...v0.3.0) (2026-02-16)
+
+
+### Features
+
+* **documentation:** update README to include local ELK monitoring setup and log management details ([e597ec5](https://github.com/MakhloufiAdnan/Projet_7-FSJA/commit/e597ec5bdca166ca7a3dc3fe2f76894864134e1a))
+
 # [0.2.0](https://github.com/MakhloufiAdnan/Projet_7-FSJA/compare/v0.1.2...v0.2.0) (2026-02-16)
 
 
