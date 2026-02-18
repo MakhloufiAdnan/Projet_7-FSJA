@@ -6,7 +6,9 @@
 
   # Access logs JSON pour ingestion ELK
   log {
-    output file /data/logs/caddy-access.json
+  output file /data/logs/caddy-access.json {
+    mode 0644
+  }
     format json
   }
 }
