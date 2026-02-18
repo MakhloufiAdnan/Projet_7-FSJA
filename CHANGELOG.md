@@ -1,3 +1,10 @@
+## [0.3.2](https://github.com/MakhloufiAdnan/Projet_7-FSJA/compare/v0.3.1...v0.3.2) (2026-02-18)
+
+
+### Bug Fixes
+
+* **elk:** allow Logstash to read Caddy access logs. Set Caddy log file permissions to 0644 (mode option) so Logstash can ingest /data/logs/caddy-access.json. ([91038eb](https://github.com/MakhloufiAdnan/Projet_7-FSJA/commit/91038eb4e60d497007bb1f0ad46f52609174b168))
+
 ## [0.3.1](https://github.com/MakhloufiAdnan/Projet_7-FSJA/compare/v0.3.0...v0.3.1) (2026-02-16)
 
 
