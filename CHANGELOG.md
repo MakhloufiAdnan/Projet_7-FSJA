@@ -1,3 +1,10 @@
+## [0.3.3](https://github.com/MakhloufiAdnan/Projet_7-FSJA/compare/v0.3.2...v0.3.3) (2026-02-20)
+
+
+### Bug Fixes
+
+* **ci:** remove unused front coverage artifact ([d31d76a](https://github.com/MakhloufiAdnan/Projet_7-FSJA/commit/d31d76ad23269cd6e5db7557dde613db37a8bcd3))
+
 ## [0.3.2](https://github.com/MakhloufiAdnan/Projet_7-FSJA/compare/v0.3.1...v0.3.2) (2026-02-18)
 
 
