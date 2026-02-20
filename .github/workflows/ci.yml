@@ -155,7 +155,6 @@ jobs:
           name: front-artifacts
           path: |
             front/audit-report.json
-            front/coverage/**
           if-no-files-found: warn
           retention-days: 14
 
