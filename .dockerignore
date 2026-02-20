@@ -7,3 +7,5 @@
 **/*.log
 .git
 .github
+*.csv
+scripts/

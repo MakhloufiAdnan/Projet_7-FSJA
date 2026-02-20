@@ -1,2 +1,4 @@
-.vscode/
+﻿.vscode/
 logs/
+*.csv
+scripts/

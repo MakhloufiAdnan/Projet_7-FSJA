@@ -184,6 +184,17 @@ npm audit --omit=dev --audit-level=high
 - Front : npm ci + npm audit --omit=dev + tests Angular + build + scan SonarCloud
 - Compose smoke test (PR) : build + démarrage via Docker Compose, puis vérification rapide (curl API + front), puis cleanup.
 
+### Ordre d’exécution (front) et justification
+
+Côté **front**, le pipeline applique un **security gate** `npm audit --omit=dev --audit-level=high` **immédiatement après** `npm ci`, avant les tests et le build.
+Objectif : **fail fast** sur les vulnérabilités **runtime** High/Critical (celles réellement déployées) et éviter de consommer du temps CI sur des tests/build si la dépendance est bloquante.
+
+Ensuite seulement :
+1) tests unitaires Angular (Karma headless),
+2) build Angular.
+
+En complément, une exécution **nightly** génère un rapport d’audit plus complet (`npm audit --json`, dev inclus), archivé en artefact, **sans bloquer** la CI.
+
 ### Artefacts
 
 La CI publie des artefacts consultables dans l'UI GitHub Actions (selon configuration), par ex. :
@@ -484,3 +495,19 @@ Bonnes pratiques :
 - éviter de logger des secrets (tokens, mots de passe)
 - limiter le niveau de logs en production
 - appliquer une politique de rétention adaptée (rotation / purge)
+
+### Rejouer les dashboards Kibana (export/import)
+
+Pour garantir la reproductibilité des visualisations (dashboards), le projet conserve un export Kibana **Saved Objects** (format `.ndjson`) :
+
+- `elk/kibana/kibana-objects.ndjson`
+
+#### Export (depuis Kibana)
+1. Ouvrir Kibana → **Stack Management** → **Saved Objects**.
+2. Cliquer **Export** et sélectionner le(s) dashboard(s) (ex : dashboard "Logs") + dépendances associées.
+3. Sauvegarder le fichier sous `elk/kibana/kibana-objects.ndjson` puis le commit.
+
+#### Import (sur une autre machine)
+1. Ouvrir Kibana → **Stack Management** → **Saved Objects**.
+2. Cliquer **Import** et sélectionner `elk/kibana/kibana-objects.ndjson`.
+3. Vérifier que le dashboard apparaît et que les filtres (ex : `component:"backend"` / `component:"frontend"`) fonctionnent.
