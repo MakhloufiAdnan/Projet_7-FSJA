@@ -13,8 +13,7 @@ MicroCRM est une application CRM simplifiée (création/édition/visualisation d
 - [Versions retenues](#versions-retenues)
 - [Prérequis](#prérequis)
 - [Démarrage rapide (Docker Compose — recommandé)](#démarrage-rapide-docker-compose--recommandé)
-- [Démarrage en local (sans Docker)]
-(#démarrage-en-local-sans-docker)
+- [Démarrage en local (sans Docker)](#démarrage-en-local-sans-docker)
   - [Back-end (API)](#back-end-api)
   - [Front-end (UI)](#front-end-ui)
 - [Tests & contrôles](#tests--contrôles)
